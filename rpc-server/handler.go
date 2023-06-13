@@ -9,8 +9,7 @@ import (
 	"github.com/TikTokTechImmersion/assignment_demo_2023/rpc-server/kitex_gen/rpc"
 )
 
-// IMServiceImpl implements the last service interface defined in the IDL.
-type IMServiceImpl struct{}
+type SendService struct{}
 
 type Message struct {
 	Message   string
@@ -18,7 +17,7 @@ type Message struct {
 	Timestamp int64
 }
 
-func (s *IMServiceImpl) Send(ctx context.Context, req *rpc.SendRequest) (*rpc.SendResponse, error) {
+func (s *SendService) SendMessage(ctx context.Context, req *rpc.SendRequest) (*rpc.SendResponse, error) {
 	err := ValidateSendRequest(req)
 	if err != nil {
 		return nil, err
@@ -29,14 +28,12 @@ func (s *IMServiceImpl) Send(ctx context.Context, req *rpc.SendRequest) (*rpc.Se
 	message := createMessage(req)
 	fmt.Println("Message created as:", message)
 
-	// TODO: generate key
 	groupID, err := checkGroupID(req.Message.GetChat())
 	if err != nil {
 		return nil, err
 	}
 	fmt.Println("Group ID is:", groupID)
 
-	// TODO: save message to database
 	err = rdb.SaveMessageToRedis(ctx, groupID, message)
 	if err != nil {
 		return nil, err
@@ -49,7 +46,7 @@ func (s *IMServiceImpl) Send(ctx context.Context, req *rpc.SendRequest) (*rpc.Se
 	return resp, nil
 }
 
-func (s *IMServiceImpl) Pull(ctx context.Context, req *rpc.PullRequest) (*rpc.PullResponse, error) {
+func (s *SendService) PullMessage(ctx context.Context, req *rpc.PullRequest) (*rpc.PullResponse, error) {
 
 	fmt.Println("Pull Request received:", req)
 	if req.GetChat() == "" {
@@ -128,15 +125,15 @@ func ValidateSendRequest(req *rpc.SendRequest) error {
 	return nil
 }
 
-func min(a, b string) string {
-	if strings.Compare(a, b) <= 0 {
+func max(a, b string) string {
+	if strings.Compare(a, b) >= 0 {
 		return a
 	}
 	return b
 }
 
-func max(a, b string) string {
-	if strings.Compare(a, b) >= 0 {
+func min(a, b string) string {
+	if strings.Compare(a, b) <= 0 {
 		return a
 	}
 	return b
